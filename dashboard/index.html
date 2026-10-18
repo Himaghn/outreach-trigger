@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Prof Outreach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column. Status strip on top, then tabs, one table per tab. Tables turn into cards on phones. */
+:root {
+  --bg: #f2f4f8; --surface: #ffffff; --line: #dce1ea; --fg: #131722; --muted: #5a6376;
+  --accent: #1f4fd1; --accent-soft: #e5ebfb;
+  --ok: #12714a; --ok-bg: #e0f3e9; --warn: #8f5a00; --warn-bg: #fbefd6; --bad: #b0212b; --bad-bg: #fbe2e3;
+  --sans: "Instrument Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1016; --surface: #151a23; --line: #252c39; --fg: #e6e9f0; --muted: #97a0b2;
+    --accent: #8ba6ff; --accent-soft: #1b2540;
+    --ok: #63d49c; --ok-bg: #11301f; --warn: #f0bd5c; --warn-bg: #33270e; --bad: #ff8b91; --bad-bg: #3b161a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1016; --surface: #151a23; --line: #252c39; --fg: #e6e9f0; --muted: #97a0b2;
+  --accent: #8ba6ff; --accent-soft: #1b2540;
+  --ok: #63d49c; --ok-bg: #11301f; --warn: #f0bd5c; --warn-bg: #33270e; --bad: #ff8b91; --bad-bg: #3b161a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(20px, env(safe-area-inset-top, 0px)) max(32px, env(safe-area-inset-bottom, 0px));
+}
+[hidden] { display: none !important; }
+.wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 20px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* header */
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { margin: 2px 0 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+.head-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.ghost { background: none; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; color: var(--muted); }
+.ghost:hover { color: var(--fg); border-color: var(--muted); }
+
+/* status strip */
+.strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.stat { border: 0; background: none; text-align: left; padding: 14px 16px; display: grid; gap: 2px; border-right: 1px solid var(--line); }
+.stat:last-child { border-right: 0; }
+.stat:hover { background: var(--accent-soft); }
+.stat .n { font-family: var(--mono); font-size: 30px; line-height: 1.1; font-weight: 500; font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 13px; color: var(--muted); }
+.stat.ok .n { color: var(--ok); } .stat.warn .n { color: var(--warn); } .stat.bad .n { color: var(--bad); }
+.stat.zero .n { color: var(--muted); }
+
+.notice { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; padding: 12px 16px; border-radius: 10px;
+  background: var(--accent-soft); }
+.notice b { font-weight: 600; }
+.notice.warn { background: var(--warn-bg); color: var(--warn); }
+.notice.bad { background: var(--bad-bg); color: var(--bad); }
+
+/* tabs */
+.tabs { display: flex; flex-wrap: wrap; gap: 0 4px; border-bottom: 1px solid var(--line); }
+.tab { border: 0; background: none; padding: 10px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  color: var(--muted); font-weight: 600; white-space: nowrap; display: inline-flex; gap: 8px; align-items: center; }
+.tab:hover { color: var(--fg); }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.count { font-family: var(--mono); font-size: 12px; font-weight: 500; padding: 1px 7px; border-radius: 99px; background: var(--line); color: var(--fg); }
+.tab[aria-selected="true"] .count { background: var(--accent); color: var(--surface); }
+
+.panel { display: grid; gap: 14px; min-width: 0; }
+.panel h2 { margin: 6px 0 0; font-size: 16px; font-weight: 600; }
+.hint { font-size: 13px; color: var(--muted); margin: 0; max-width: 70ch; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.chipbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 4px 12px; font-size: 13px; color: var(--muted); }
+.chipbtn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+/* tables */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+  padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; }
+.who { font-weight: 600; }
+.topic { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.when { font-family: var(--mono); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.idc { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+.pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.bad { background: var(--bad-bg); color: var(--bad); } .pill.wait { background: var(--line); color: var(--muted); }
+.only-stack { display: none; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+.bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; min-width: 80px; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+
+footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; }
+
+/* lock screen */
+.lock { min-height: 70vh; display: grid; place-items: center; }
+.lock form { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 14px; }
+.lock h1 { font-size: 22px; }
+.lock label { font-size: 13px; font-weight: 600; }
+.lock input[type=password] { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.lock .row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.primary { border: 0; border-radius: 8px; padding: 10px 14px; background: var(--accent); color: var(--surface); font-weight: 600; }
+.primary[disabled] { opacity: .6; cursor: progress; }
+.err { color: var(--bad); font-size: 14px; margin: 0; }
+
+@media (max-width: 720px) {
+  .stat { border-bottom: 1px solid var(--line); }
+  .stat:nth-child(3) { border-right: 0; }
+  .stat .n { font-size: 24px; }
+  .strip { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .stat { grid-column: span 2; }
+  .stat:nth-child(n+4) { grid-column: span 3; border-bottom: 0; }
+  .stat:nth-child(4) { border-right: 1px solid var(--line); }
+  .tab { padding: 9px 10px; }
+  .stack td.idcell { display: none; }
+  .only-stack { display: inline !important; margin-right: 6px; }
+  /* tables become cards */
+  .card.stack { overflow: visible; background: none; border: 0; display: block; }
+  .stack table, .stack tbody, .stack tr, .stack td { display: block; width: 100%; }
+  .stack thead { display: none; }
+  .stack tr { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; }
+  .stack td { border: 0; padding: 3px 0; display: flex; gap: 12px; justify-content: space-between; text-align: right; }
+  .stack td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; text-align: left; flex: none; padding-top: 2px; }
+  .stack td.main { display: block; text-align: left; padding-bottom: 6px; }
+  .stack td.main::before { content: none; }
+  .stack td.num { text-align: right; }
+}
+@media (prefers-reduced-motion: no-preference) { .panel { animation: fade .15s ease-out; } @keyframes fade { from { opacity: .4; } } }
+</style>
+</head>
+<body>
+<div id="lock" class="lock" hidden>
+  <form id="lockForm" autocomplete="on">
+    <div>
+      <div class="eyebrow">Summer 2027 · research internships</div>
+      <h1>Prof Outreach</h1>
+    </div>
+    <div style="display:grid;gap:6px">
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+    </div>
+    <label class="row" for="remember"><input id="remember" type="checkbox" checked> Remember on this device</label>
+    <p id="lockErr" class="err" hidden></p>
+    <button id="unlockBtn" class="primary" type="submit">Unlock</button>
+  </form>
+</div>
+
+<div id="app" class="wrap" hidden>
+  <header>
+    <div>
+      <div class="eyebrow">Summer 2027 · research internships</div>
+      <h1>Prof Outreach</h1>
+    </div>
+    <div class="head-right">
+      <span class="muted" id="updated"></span>
+      <button class="ghost" id="refreshBtn" type="button">Refresh</button>
+      <button class="ghost" id="lockBtn" type="button">Lock</button>
+    </div>
+  </header>
+  <div class="strip" id="strip"></div>
+  <div id="notices" style="display:grid;gap:10px"></div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <section class="panel" id="panel" role="tabpanel"></section>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const toB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+    del(k) { try { localStorage.removeItem(k); } catch {} },
+  };
+  const KEY = "po.key", TAB = "po.tab";
+  let key = null, data = null, blob = null, sentFilter = "all";
+
+  async function fetchBlob() {
+    const r = await fetch("data.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status === 404 ? "missing" : "fetch");
+    return r.json();
+  }
+  async function derive(pw, b) {
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: b64(b.salt), iterations: b.iterations, hash: "SHA-256" },
+      base, { name: "AES-GCM", length: 256 }, true, ["decrypt"]);
+  }
+  async function open(k, b) {
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(b.iv) }, k, b64(b.data));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+
+  function showLock(msg) {
+    $("app").hidden = true; $("lock").hidden = false;
+    $("lockErr").hidden = !msg; $("lockErr").textContent = msg || "";
+    $("unlockBtn").disabled = false; $("unlockBtn").textContent = "Unlock";
+    setTimeout(() => $("pw").focus(), 0);
+  }
+
+  $("lockForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const pw = $("pw").value;
+    if (!pw) return;
+    $("unlockBtn").disabled = true; $("unlockBtn").textContent = "Unlocking…"; $("lockErr").hidden = true;
+    try {
+      blob = blob || await fetchBlob();
+      const k = await derive(pw, blob);
+      data = await open(k, blob);
+      key = k;
+      if ($("remember").checked) store.set(KEY, JSON.stringify({ salt: blob.salt, raw: toB64(await crypto.subtle.exportKey("raw", k)) }));
+      $("pw").value = "";
+      showApp();
+    } catch (err) {
+      showLock(err.message === "missing" ? "The dashboard hasn't been built yet. Run “Build dashboard” in the outreach-trigger repo's Actions."
+        : err.message === "fetch" ? "Couldn't load the data. Check your connection and try again." : "Wrong password.");
+    }
+  });
+
+  $("lockBtn").addEventListener("click", () => { store.del(KEY); key = null; data = null; showLock(); });
+  $("refreshBtn").addEventListener("click", () => refresh(true));
+
+  async function refresh(manual) {
+    if (!key) return;
+    const btn = $("refreshBtn");
+    if (manual) { btn.disabled = true; btn.textContent = "Refreshing…"; }
+    try { blob = await fetchBlob(); data = await open(key, blob); render(); }
+    catch (err) { if (err.name === "OperationError") { store.del(KEY); key = null; showLock("The password changed. Enter the new one."); } }
+    finally { btn.disabled = false; btn.textContent = "Refresh"; }
+  }
+
+  // ---------- rendering ----------
+  const TABS = [
+    { id: "queued", label: "Queued", n: d => d.counts.queued },
+    { id: "sent", label: "Sent", n: d => d.counts.sent },
+    { id: "replies", label: "Replies", n: d => d.counts.replies },
+    { id: "auto", label: "Auto-replies & bounces", n: d => d.counts.auto_replies + d.counts.bounced + d.counts.failed },
+    { id: "batches", label: "Batches", n: null },
+  ];
+  let current = (location.hash || "").slice(1) || store.get(TAB) || "queued";
+  if (!TABS.some(t => t.id === current)) current = "queued";
+
+  function showApp() { $("lock").hidden = true; $("app").hidden = false; render(); }
+
+  function hoursOld(d) { return (Date.now() - Date.parse(d.generated_at)) / 36e5; }
+
+  function render() {
+    const d = data, c = d.counts;
+    $("updated").textContent = `Updated ${d.generated_ist} IST`;
+    const stat = (id, n, label, tone) =>
+      `<button class="stat ${n ? tone : "zero"}" data-go="${id}" type="button"><span class="n">${n}</span><span class="l">${label}</span></button>`;
+    $("strip").innerHTML = stat("sent", c.sent, "Sent", "") + stat("queued", c.queued, "Queued", "") +
+      stat("replies", c.replies, "Replies", "ok") + stat("auto", c.auto_replies, "Auto-replies", "warn") +
+      stat("auto", c.bounced, "Bounced", "bad");
+    $("strip").querySelectorAll("[data-go]").forEach(b => b.onclick = () => select(b.dataset.go, true));
+
+    let notes = "";
+    if (d.next_send) notes += `<div class="notice"><b>Next send</b><span class="mono">${esc(d.next_send.ist)} IST</span><span>to ${esc(d.next_send.to.join(", "))}</span><span class="muted">sent between ${esc(d.window)} their time, weekdays</span></div>`;
+    else notes += `<div class="notice"><b>Nothing queued.</b><span class="muted">Queue the next batch from the Prof-outreach repo's Actions.</span></div>`;
+    if (c.failed) notes += `<div class="notice bad"><b>${c.failed} failed to send.</b><span>See Auto-replies &amp; bounces.</span></div>`;
+    if (d.reply_check && !d.reply_check.ok) notes += `<div class="notice warn"><b>Reply checking isn't working</b><span>last tried ${esc(d.reply_check.ist)} IST: ${esc(d.reply_check.message)}</span></div>`;
+    const age = hoursOld(d);
+    if (age > 2) notes += `<div class="notice warn"><b>This data is ${Math.round(age)} hours old.</b><span>The builder may be paused: run “Build dashboard” in the outreach-trigger repo's Actions.</span></div>`;
+    $("notices").innerHTML = notes;
+
+    $("tabs").innerHTML = TABS.map(t =>
+      `<button class="tab" role="tab" id="tab-${t.id}" aria-controls="panel" aria-selected="${t.id === current}" tabindex="${t.id === current ? 0 : -1}" data-tab="${t.id}" type="button">${esc(t.label)}${t.n ? `<span class="count">${t.n(d)}</span>` : ""}</button>`).join("");
+    $("tabs").querySelectorAll(".tab").forEach(b => b.onclick = () => select(b.dataset.tab, true));
+    $("panel").setAttribute("aria-labelledby", "tab-" + current);
+    $("panel").innerHTML = PANELS[current](d);
+    $("panel").querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { sentFilter = b.dataset.filter; render(); });
+
+    const rc = d.reply_check;
+    $("foot").innerHTML = `<span>Rebuilt about every 15 minutes.</span>` +
+      (rc ? `<span>Inbox last checked ${esc(rc.ist)} IST${rc.ok ? "" : " (failed)"}.</span>` : `<span>Inbox not checked yet.</span>`) +
+      `<span>All times IST; their local time alongside.</span>`;
+  }
+
+  function select(id, focus) {
+    current = id; store.set(TAB, id);
+    try { history.replaceState(null, "", "#" + id); } catch {}
+    render();
+    if (focus) $("tab-" + id)?.focus({ preventScroll: true });
+  }
+  $("tabs").addEventListener("keydown", e => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    const i = TABS.findIndex(t => t.id === current);
+    select(TABS[(i + (e.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length].id, true);
+  });
+
+  const td = (label, html, cls = "") => `<td data-label="${esc(label)}"${cls ? ` class="${cls}"` : ""}>${html}</td>`;
+  const person = r => `<div class="who"><span class="idc only-stack">#${esc(r.id)}</span>${esc(r.prof)}</div>${r.topic ? `<div class="topic">${esc(r.topic)}</div>` : ""}`;
+  const table = (heads, rows, empty, stack = true) => rows.length
+    ? `<div class="card${stack ? " stack" : ""}"><table><thead><tr>${heads.map(h => `<th${h.num ? ' class="num"' : ""}>${esc(h.t ?? h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`
+    : `<div class="card"><div class="empty">${esc(empty)}</div></div>`;
+  const STATUS = { replied: ["ok", "Replied"], "auto-reply": ["warn", "Auto-reply"], bounced: ["bad", "Bounced"], "": ["wait", "No reply yet"] };
+
+  const PANELS = {
+    queued: d => `<p class="hint">Each email goes out in the professor's ${esc(d.window)} morning window on a weekday, at most 2 per university per day.</p>` +
+      table(["#", "Professor", "University", "Goes out (IST)", "Their time", "Batch"],
+        d.queued.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", person(r), "main")}${td("University", esc(r.university))}${td("Goes out", `<span class="when">${esc(r.ist)}</span>`)}${td("Their time", `<span class="when">${esc(r.local)}</span>`)}${td("Batch", esc(r.batch))}</tr>`),
+        "Nothing queued."),
+    sent: d => {
+      const counts = { all: d.sent.length };
+      d.sent.forEach(r => counts[r.status || "none"] = (counts[r.status || "none"] || 0) + 1);
+      const f = [["all", "All"], ["none", "No reply yet"], ["replied", "Replied"], ["auto-reply", "Auto-reply"], ["bounced", "Bounced"]];
+      const rows = d.sent.filter(r => sentFilter === "all" || (r.status || "none") === sentFilter);
+      return `<div class="filters">${f.map(([k, l]) => `<button class="chipbtn" type="button" data-filter="${k}" aria-pressed="${sentFilter === k}">${l} <span class="mono">${counts[k] || 0}</span></button>`).join("")}</div>` +
+        table(["#", "Professor", "University", "Sent (IST)", "Their time", "Status"],
+          rows.map(r => { const [tone, label] = STATUS[r.status] || STATUS[""];
+            return `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", person(r), "main")}${td("University", esc(r.university))}${td("Sent", `<span class="when">${esc(r.ist)}</span>`)}${td("Their time", `<span class="when">${esc(r.local)}</span>`)}${td("Status", `<span class="pill ${tone}">${label}</span>`)}</tr>`; }),
+          d.sent.length ? "None in this group." : "Nothing sent yet.");
+    },
+    replies: d => `<p class="hint">Real replies from professors. Read them in your IITB inbox; only the date and subject are shown here.</p>` +
+      replyTable(d.replies, "No replies yet."),
+    auto: d => `<h2>Auto-replies</h2><p class="hint">Out-of-office and automatic responses. Open them in your inbox: some give a return date or another person to contact.</p>` +
+      replyTable(d.auto_replies, "None.") +
+      `<h2>Bounced</h2><p class="hint">The address didn't work. These need a corrected address.</p>` + replyTable(d.bounces, "None.") +
+      (d.failed.length ? `<h2>Failed to send</h2>` + table(["#", "Professor", "University", "Error"],
+        d.failed.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", `<div class="who"><span class="idc only-stack">#${esc(r.id)}</span>${esc(r.prof)}</div>`, "main")}${td("University", esc(r.university))}${td("Error", esc(r.error))}</tr>`), "None.") : ""),
+    batches: d => `<p class="hint">Y and N come from your review sheet. Only Y emails are ever queued.</p>` +
+      table(["Batch", { t: "Drafts", num: 1 }, { t: "Y", num: 1 }, { t: "N", num: 1 }, { t: "Not reviewed", num: 1 }, { t: "Queued", num: 1 }, { t: "Sent", num: 1 }, { t: "Replied", num: 1 }, "Progress"],
+        d.batches.map(b => `<tr>${td("", `<div class="who">${esc(b.batch)}</div>`, "main")}${["drafts", "y", "n", "unreviewed", "queued", "sent", "replied"].map(k => td({ drafts: "Drafts", y: "Y", n: "N", unreviewed: "Not reviewed", queued: "Queued", sent: "Sent", replied: "Replied" }[k], `<span class="mono">${b[k]}</span>`, "num")).join("")}${td("Sent of drafts", `<div class="bar" title="${b.sent} of ${b.drafts} sent"><i style="width:${b.drafts ? Math.round(100 * b.sent / b.drafts) : 0}%"></i></div>`)}</tr>`),
+        "No drafts."),
+  };
+  function replyTable(rows, empty) {
+    return table(["#", "Professor", "University", "Received (IST)", "Subject"],
+      rows.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", `<div class="who"><span class="idc only-stack">#${esc(r.id)}</span>${esc(r.prof)}</div>`, "main")}${td("University", esc(r.university))}${td("Received", `<span class="when">${esc(r.ist)}</span>`)}${td("Subject", esc(r.subject))}</tr>`), empty);
+  }
+
+  // ---------- start ----------
+  (async () => {
+    if (!window.crypto?.subtle) { showLock("This browser can't decrypt the dashboard. Open it over https in a recent browser."); return; }
+    let saved = null;
+    try { saved = JSON.parse(store.get(KEY) || "null"); } catch {}
+    try { blob = await fetchBlob(); }
+    catch (err) { showLock(err.message === "missing" ? "The dashboard hasn't been built yet. Run “Build dashboard” in the outreach-trigger repo's Actions." : "Couldn't load the data. Check your connection and reload."); return; }
+    if (saved && saved.salt === blob.salt) {
+      try {
+        key = await crypto.subtle.importKey("raw", b64(saved.raw), { name: "AES-GCM" }, true, ["decrypt"]);
+        data = await open(key, blob);
+        showApp();
+      } catch { store.del(KEY); key = null; showLock(); }
+    } else showLock();
+    setInterval(() => { if (key && document.visibilityState === "visible") refresh(false); }, 5 * 60 * 1000);
+    document.addEventListener("visibilitychange", () => { if (key && document.visibilityState === "visible" && data && hoursOld(data) > 0.25) refresh(false); });
+  })();
+})();
+</script>
+</body>
+</html>
