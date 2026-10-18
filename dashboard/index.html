@@ -270,7 +270,7 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
     const stat = (id, n, label, tone) =>
       `<button class="stat ${n ? tone : "zero"}" data-go="${id}" type="button"><span class="n">${n}</span><span class="l">${label}</span></button>`;
     $("strip").innerHTML = stat("sent", c.sent, "Sent", "") + stat("queued", c.queued, "Queued", "") +
-      stat("replies", c.replies, "Replies", "ok") + stat("auto", c.auto_replies, "Auto-replies", "warn") +
+      stat("replies", c.replies, c.declined ? `Replies · ${c.declined} look like a no` : "Replies", "ok") + stat("auto", c.auto_replies, "Auto-replies", "warn") +
       stat("auto", c.bounced, "Bounced", "bad");
     $("strip").querySelectorAll("[data-go]").forEach(b => b.onclick = () => select(b.dataset.go, true));
 
@@ -313,7 +313,7 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
   const table = (heads, rows, empty, stack = true) => rows.length
     ? `<div class="card${stack ? " stack" : ""}"><table><thead><tr>${heads.map(h => `<th${h.num ? ' class="num"' : ""}>${esc(h.t ?? h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`
     : `<div class="card"><div class="empty">${esc(empty)}</div></div>`;
-  const STATUS = { replied: ["ok", "Replied"], "auto-reply": ["warn", "Auto-reply"], bounced: ["bad", "Bounced"], "": ["wait", "No reply yet"] };
+  const STATUS = { replied: ["ok", "Replied"], declined: ["bad", "Looks like a no"], "auto-reply": ["warn", "Auto-reply"], bounced: ["bad", "Bounced"], "": ["wait", "No reply yet"] };
 
   const PANELS = {
     queued: d => `<p class="hint">Each email goes out in the professor's ${esc(d.window)} morning window on a weekday, at most 2 per university per day.</p>` +
@@ -323,7 +323,7 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
     sent: d => {
       const counts = { all: d.sent.length };
       d.sent.forEach(r => counts[r.status || "none"] = (counts[r.status || "none"] || 0) + 1);
-      const f = [["all", "All"], ["none", "No reply yet"], ["replied", "Replied"], ["auto-reply", "Auto-reply"], ["bounced", "Bounced"]];
+      const f = [["all", "All"], ["none", "No reply yet"], ["replied", "Replied"], ["declined", "Looks like a no"], ["auto-reply", "Auto-reply"], ["bounced", "Bounced"]];
       const rows = d.sent.filter(r => sentFilter === "all" || (r.status || "none") === sentFilter);
       return `<div class="filters">${f.map(([k, l]) => `<button class="chipbtn" type="button" data-filter="${k}" aria-pressed="${sentFilter === k}">${l} <span class="mono">${counts[k] || 0}</span></button>`).join("")}</div>` +
         table(["#", "Professor", "University", "Sent (IST)", "Their time", "Status"],
@@ -331,7 +331,7 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
             return `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", person(r), "main")}${td("University", esc(r.university))}${td("Sent", `<span class="when">${esc(r.ist)}</span>`)}${td("Their time", `<span class="when">${esc(r.local)}</span>`)}${td("Status", `<span class="pill ${tone}">${label}</span>`)}</tr>`; }),
           d.sent.length ? "None in this group." : "Nothing sent yet.");
     },
-    replies: d => `<p class="hint">Real replies from professors. Read them in your IITB inbox; only the date and subject are shown here.</p>` +
+    replies: d => `<p class="hint">Answers from professors. “Looks like a no” is a guess from the wording, so read the email itself. Only the date, subject and folder are shown here.</p>` +
       replyTable(d.replies, "No replies yet."),
     auto: d => `<h2>Auto-replies</h2><p class="hint">Out-of-office and automatic responses. Open them in your inbox: some give a return date or another person to contact.</p>` +
       replyTable(d.auto_replies, "None.") +
@@ -344,8 +344,8 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
         "No drafts."),
   };
   function replyTable(rows, empty) {
-    return table(["#", "Professor", "University", "Received (IST)", "Subject"],
-      rows.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", `<div class="who"><span class="idc only-stack">#${esc(r.id)}</span>${esc(r.prof)}</div>`, "main")}${td("University", esc(r.university))}${td("Received", `<span class="when">${esc(r.ist)}</span>`)}${td("Subject", esc(r.subject))}</tr>`), empty);
+    return table(["#", "Professor", "University", "Received (IST)", "Subject", ""],
+      rows.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", `<div class="who"><span class="idc only-stack">#${esc(r.id)}</span>${esc(r.prof)}</div>`, "main")}${td("University", esc(r.university))}${td("Received", `<span class="when">${esc(r.ist)}</span>`)}${td("Subject", esc(r.subject))}${td("Notes", [r.label === "no" ? `<span class="pill bad">Looks like a no</span>` : "", r.folder && r.folder.toUpperCase() !== "INBOX" ? `<span class="pill wait">in ${esc(r.folder)}</span>` : ""].filter(Boolean).join(" ") || `<span class="muted">–</span>`)}</tr>`), empty);
   }
 
   // ---------- start ----------
