@@ -277,6 +277,7 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
     let notes = "";
     if (d.next_send) notes += `<div class="notice"><b>Next send</b><span class="mono">${esc(d.next_send.ist)} IST</span><span>to ${esc(d.next_send.to.join(", "))}</span><span class="muted">sent between ${esc(d.window)} their time, weekdays</span></div>`;
     else notes += `<div class="notice"><b>Nothing queued.</b><span class="muted">Queue the next batch from the Prof-outreach repo's Actions.</span></div>`;
+    if (c.follow_ups_to_review) notes += `<div class="notice warn"><b>${c.follow_ups_to_review} follow-up${c.follow_ups_to_review > 1 ? "s" : ""} ready to review.</b><span>They're in the Follow-ups sheet of review.xlsx. Mark Y or N and queue them.</span></div>`;
     if (c.failed) notes += `<div class="notice bad"><b>${c.failed} failed to send.</b><span>See Auto-replies &amp; bounces.</span></div>`;
     if (d.reply_check && !d.reply_check.ok) notes += `<div class="notice warn"><b>Reply checking isn't working</b><span>last tried ${esc(d.reply_check.ist)} IST: ${esc(d.reply_check.message)}</span></div>`;
     const age = hoursOld(d);
@@ -313,22 +314,23 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
   const table = (heads, rows, empty, stack = true) => rows.length
     ? `<div class="card${stack ? " stack" : ""}"><table><thead><tr>${heads.map(h => `<th${h.num ? ' class="num"' : ""}>${esc(h.t ?? h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`
     : `<div class="card"><div class="empty">${esc(empty)}</div></div>`;
-  const STATUS = { replied: ["ok", "Replied"], declined: ["bad", "Looks like a no"], "auto-reply": ["warn", "Auto-reply"], bounced: ["bad", "Bounced"], "": ["wait", "No reply yet"] };
+  const STATUS = { replied: ["ok", "Replied"], declined: ["bad", "Looks like a no"], "auto-reply": ["warn", "Auto-reply"], bounced: ["bad", "Bounced"], "followed-up": ["wait", "Followed up"], "": ["wait", "No reply yet"] };
 
   const PANELS = {
     queued: d => `<p class="hint">Each email goes out in the professor's ${esc(d.window)} morning window on a weekday, at most 2 per university per day.</p>` +
       table(["#", "Professor", "University", "Goes out (IST)", "Their time", "Batch"],
         d.queued.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", person(r), "main")}${td("University", esc(r.university))}${td("Goes out", `<span class="when">${esc(r.ist)}</span>`)}${td("Their time", `<span class="when">${esc(r.local)}</span>`)}${td("Batch", esc(r.batch))}</tr>`),
         "Nothing queued."),
-    sent: d => {
+    sent: d => `<p class="hint">Professors who haven't answered get one follow-up draft 14 days after the first email, for you to approve.</p>` + sentPanel(d),
+    _sent: d => {
       const counts = { all: d.sent.length };
       d.sent.forEach(r => counts[r.status || "none"] = (counts[r.status || "none"] || 0) + 1);
-      const f = [["all", "All"], ["none", "No reply yet"], ["replied", "Replied"], ["declined", "Looks like a no"], ["auto-reply", "Auto-reply"], ["bounced", "Bounced"]];
+      const f = [["all", "All"], ["none", "No reply yet"], ["followed-up", "Followed up"], ["replied", "Replied"], ["declined", "Looks like a no"], ["auto-reply", "Auto-reply"], ["bounced", "Bounced"]];
       const rows = d.sent.filter(r => sentFilter === "all" || (r.status || "none") === sentFilter);
       return `<div class="filters">${f.map(([k, l]) => `<button class="chipbtn" type="button" data-filter="${k}" aria-pressed="${sentFilter === k}">${l} <span class="mono">${counts[k] || 0}</span></button>`).join("")}</div>` +
         table(["#", "Professor", "University", "Sent (IST)", "Their time", "Status"],
           rows.map(r => { const [tone, label] = STATUS[r.status] || STATUS[""];
-            return `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", person(r), "main")}${td("University", esc(r.university))}${td("Sent", `<span class="when">${esc(r.ist)}</span>`)}${td("Their time", `<span class="when">${esc(r.local)}</span>`)}${td("Status", `<span class="pill ${tone}">${label}</span>`)}</tr>`; }),
+            return `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", person(r), "main")}${td("University", esc(r.university))}${td("Sent", `<span class="when">${esc(r.ist)}</span>`)}${td("Their time", `<span class="when">${esc(r.local)}</span>`)}${td("Status", `<span class="pill ${tone}">${label}</span>${r.follow_up ? `<div class="topic">${esc(r.follow_up)}</div>` : ""}`)}</tr>`; }),
           d.sent.length ? "None in this group." : "Nothing sent yet.");
     },
     replies: d => `<p class="hint">Answers from professors. “Looks like a no” is a guess from the wording, so read the email itself. Only the date, subject and folder are shown here.</p>` +
@@ -343,6 +345,7 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
         d.batches.map(b => `<tr>${td("", `<div class="who">${esc(b.batch)}</div>`, "main")}${["drafts", "y", "n", "unreviewed", "queued", "sent", "replied"].map(k => td({ drafts: "Drafts", y: "Y", n: "N", unreviewed: "Not reviewed", queued: "Queued", sent: "Sent", replied: "Replied" }[k], `<span class="mono">${b[k]}</span>`, "num")).join("")}${td("Sent of drafts", `<div class="bar" title="${b.sent} of ${b.drafts} sent"><i style="width:${b.drafts ? Math.round(100 * b.sent / b.drafts) : 0}%"></i></div>`)}</tr>`),
         "No drafts."),
   };
+  function sentPanel(d) { return PANELS._sent(d); }
   function replyTable(rows, empty) {
     return table(["#", "Professor", "University", "Received (IST)", "Subject", ""],
       rows.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", `<div class="who"><span class="idc only-stack">#${esc(r.id)}</span>${esc(r.prof)}</div>`, "main")}${td("University", esc(r.university))}${td("Received", `<span class="when">${esc(r.ist)}</span>`)}${td("Subject", esc(r.subject))}${td("Notes", [r.label === "no" ? `<span class="pill bad">Looks like a no</span>` : "", r.folder && r.folder.toUpperCase() !== "INBOX" ? `<span class="pill wait">in ${esc(r.folder)}</span>` : ""].filter(Boolean).join(" ") || `<span class="muted">–</span>`)}</tr>`), empty);
