@@ -9,13 +9,9 @@ name: Start outreach sender
 #   00:30 Singapore/Hong Kong   06:30-08:30 Europe and UK   12:30-13:30 Toronto
 #   21:30-22:30 Sydney/Melbourne and 23:30 Tokyo/Seoul (previous UTC day)
 # Each opening gets starts at about +2, +10, +20 and +35 minutes.
+# Its schedule is switched off: cron-job.org now starts the private sender
+# directly. Kept for starting the sender by hand.
 on:
-  schedule:
-    - cron: "32,40,50 0,6,7,8,12,13 * * 1-5"
-    - cron: "5 1,7,8,9,13,14 * * 1-5"
-    - cron: "32,40,50 21,22,23 * * 0-4"
-    - cron: "5 22,23 * * 0-4"
-    - cron: "5 0 * * 1-5"
   workflow_dispatch:
 
 permissions: {}
