@@ -89,6 +89,19 @@ jobs:
         with:
           path: _site
 
+      # GitHub's Pages service fails now and then ("No artifacts named github-pages").
+      # Try twice and don't fail the run over it: the next rebuild is 15 minutes
+      # away, and the website itself warns if its data gets more than 2 hours old.
       - id: deploy
         if: steps.ready.outputs.go == 'true'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before retrying
+        if: steps.ready.outputs.go == 'true' && steps.deploy.outcome == 'failure'
+        run: sleep 30
+
+      - id: deploy_retry
+        if: steps.ready.outputs.go == 'true' && steps.deploy.outcome == 'failure'
+        continue-on-error: true
         uses: actions/deploy-pages@v4
