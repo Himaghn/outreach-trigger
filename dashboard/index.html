@@ -277,7 +277,9 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
     let notes = "";
     if (d.next_send) notes += `<div class="notice"><b>Next send</b><span class="mono">${esc(d.next_send.ist)} IST</span><span>to ${esc(d.next_send.to.join(", "))}</span><span class="muted">sent between ${esc(d.window)} their time, weekdays</span></div>`;
     else notes += `<div class="notice"><b>Nothing queued.</b><span class="muted">Queue the next batch from the Prof-outreach repo's Actions.</span></div>`;
-    if (c.follow_ups_to_review) notes += `<div class="notice warn"><b>${c.follow_ups_to_review} follow-up${c.follow_ups_to_review > 1 ? "s" : ""} ready to review.</b><span>They're in the Follow-ups sheet of review.xlsx. Mark Y or N and queue them.</span></div>`;
+    const fu = d.follow_ups || {};
+    if (c.follow_ups_queued || c.follow_ups_upcoming) notes += `<div class="notice"><b>Follow-ups are automatic</b><span>${c.follow_ups_queued || 0} queued${fu.next ? ` · next <span class="mono">${esc(fu.next)} IST</span>` : ""}</span>${c.follow_ups_upcoming ? `<span class="muted">${c.follow_ups_upcoming} more get drafted and queued by ${esc(fu.upcoming_until)}, 14 days after each first email</span>` : ""}</div>`;
+    if (c.follow_ups_to_review) notes += `<div class="notice warn"><b>${c.follow_ups_to_review} follow-up${c.follow_ups_to_review > 1 ? "s" : ""} drafted but not queued.</b><span>They were made with --no-queue; queue them from the Follow-ups sheet of review.xlsx.</span></div>`;
     if (c.failed) notes += `<div class="notice bad"><b>${c.failed} failed to send.</b><span>See Auto-replies &amp; bounces.</span></div>`;
     if (d.reply_check && !d.reply_check.ok) notes += `<div class="notice warn"><b>Reply checking isn't working</b><span>last tried ${esc(d.reply_check.ist)} IST: ${esc(d.reply_check.message)}</span></div>`;
     const age = hoursOld(d);
@@ -321,7 +323,7 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
       table(["#", "Professor", "University", "Goes out (IST)", "Their time", "Batch"],
         d.queued.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", person(r), "main")}${td("University", esc(r.university))}${td("Goes out", `<span class="when">${esc(r.ist)}</span>`)}${td("Their time", `<span class="when">${esc(r.local)}</span>`)}${td("Batch", esc(r.batch))}</tr>`),
         "Nothing queued."),
-    sent: d => `<p class="hint">Professors who haven't answered get one follow-up draft 14 days after the first email, for you to approve.</p>` + sentPanel(d),
+    sent: d => `<p class="hint">Professors who haven't answered get one follow-up 14 days after the first email (28 after an auto-reply). It's drafted and queued automatically, and dropped if they reply first.</p>` + sentPanel(d),
     _sent: d => {
       const counts = { all: d.sent.length };
       d.sent.forEach(r => counts[r.status || "none"] = (counts[r.status || "none"] || 0) + 1);
@@ -340,9 +342,9 @@ footer { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; g
       `<h2>Bounced</h2><p class="hint">The address didn't work. These need a corrected address.</p>` + replyTable(d.bounces, "None.") +
       (d.failed.length ? `<h2>Failed to send</h2>` + table(["#", "Professor", "University", "Error"],
         d.failed.map(r => `<tr>${td("#", `<span class="idc">${esc(r.id)}</span>`, "idcell")}${td("", `<div class="who"><span class="idc only-stack">#${esc(r.id)}</span>${esc(r.prof)}</div>`, "main")}${td("University", esc(r.university))}${td("Error", esc(r.error))}</tr>`), "None.") : ""),
-    batches: d => `<p class="hint">Y and N come from your review sheet. Only Y emails are ever queued.</p>` +
+    batches: d => `<p class="hint">B1–B7 and MANUAL were reviewed by you. Backups (BK), the US wave (US1), Ferrari's suggestions (REF) and follow-ups from F-B2 on were approved automatically. Only approved emails are ever queued.</p>` +
       table(["Batch", { t: "Drafts", num: 1 }, { t: "Y", num: 1 }, { t: "N", num: 1 }, { t: "Not reviewed", num: 1 }, { t: "Queued", num: 1 }, { t: "Sent", num: 1 }, { t: "Replied", num: 1 }, "Progress"],
-        d.batches.map(b => `<tr>${td("", `<div class="who">${esc(b.batch)}</div>`, "main")}${["drafts", "y", "n", "unreviewed", "queued", "sent", "replied"].map(k => td({ drafts: "Drafts", y: "Y", n: "N", unreviewed: "Not reviewed", queued: "Queued", sent: "Sent", replied: "Replied" }[k], `<span class="mono">${b[k]}</span>`, "num")).join("")}${td("Sent of drafts", `<div class="bar" title="${b.sent} of ${b.drafts} sent"><i style="width:${b.drafts ? Math.round(100 * b.sent / b.drafts) : 0}%"></i></div>`)}</tr>`),
+        d.batches.map(b => `<tr>${td("", `<div class="who">${esc(b.batch)}</div>${b.how ? `<div class="topic">${esc(b.how)}</div>` : ""}`, "main")}${["drafts", "y", "n", "unreviewed", "queued", "sent", "replied"].map(k => td({ drafts: "Drafts", y: "Y", n: "N", unreviewed: "Not reviewed", queued: "Queued", sent: "Sent", replied: "Replied" }[k], `<span class="mono">${b[k]}</span>`, "num")).join("")}${td("Sent of drafts", `<div class="bar" title="${b.sent} of ${b.drafts} sent"><i style="width:${b.drafts ? Math.round(100 * b.sent / b.drafts) : 0}%"></i></div>`)}</tr>`),
         "No drafts."),
   };
   function sentPanel(d) { return PANELS._sent(d); }
