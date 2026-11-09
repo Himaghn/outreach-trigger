@@ -44,7 +44,11 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/Himaghn/Prof-outreach/contents/config.yaml)
           if [ "$code" != "200" ]; then
-            echo "::warning::OUTREACH_TOKEN can't read Prof-outreach yet (HTTP $code). Add 'Contents: Read-only' to the token."
+            if [ "$code" = "401" ]; then
+              echo "::warning::OUTREACH_TOKEN was rejected (HTTP 401): it expired or was regenerated. Paste the current token into the OUTREACH_TOKEN secret."
+            else
+              echo "::warning::OUTREACH_TOKEN can't read Prof-outreach (HTTP $code). Give the token 'Contents: Read-only' on Prof-outreach."
+            fi
             echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           echo "go=true" >> "$GITHUB_OUTPUT"
