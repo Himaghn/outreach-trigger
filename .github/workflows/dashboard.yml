@@ -14,9 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write   # pushes the built site to the gh-pages branch
 
 concurrency:
   group: pages
@@ -26,9 +24,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 6
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - name: Check setup
         id: ready
@@ -85,27 +80,23 @@ jobs:
           touch _site/.nojekyll
           rm -rf private
 
-      - uses: actions/configure-pages@v5
+      # Published by pushing the built site to the gh-pages branch (Settings > Pages >
+      # Deploy from a branch: gh-pages, / root). The Actions-based Pages deploy kept
+      # reporting success while serving a copy frozen at 24 Nov, so it's no longer used.
+      # The branch holds one commit, replaced on every build, with only the encrypted
+      # data.json, the page, robots.txt and .nojekyll: nothing that isn't already public.
+      - name: Publish to gh-pages
         if: steps.ready.outputs.go == 'true'
-
-      - uses: actions/upload-pages-artifact@v3
-        if: steps.ready.outputs.go == 'true'
-        with:
-          path: _site
-
-      # GitHub's Pages service fails now and then ("No artifacts named github-pages").
-      # Try twice and don't fail the run over it: the next rebuild is 15 minutes
-      # away, and the website itself warns if its data gets more than 2 hours old.
-      - id: deploy
-        if: steps.ready.outputs.go == 'true'
-        continue-on-error: true
-        uses: actions/deploy-pages@v4
-
-      - name: Wait before retrying
-        if: steps.ready.outputs.go == 'true' && steps.deploy.outcome == 'failure'
-        run: sleep 30
-
-      - id: deploy_retry
-        if: steps.ready.outputs.go == 'true' && steps.deploy.outcome == 'failure'
-        continue-on-error: true
-        uses: actions/deploy-pages@v4
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd _site
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Dashboard build $(date -u +%FT%TZ)"
+          for i in 1 2; do
+            git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages && break
+            sleep 20
+          done
